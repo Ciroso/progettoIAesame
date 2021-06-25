@@ -85,3 +85,4 @@ if __name__ == '__main__':
     plot_learning_curves(bnbre, prcre, Title2, X_vectorized_reut, y_reut)
     plt.savefig("bnb_prc_Reuters.png", dpi=100)
     plt.show()
+
