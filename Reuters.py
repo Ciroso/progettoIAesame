@@ -78,12 +78,15 @@ def return_X_y_reut():
         for segment in docs:
             if any("<D>" + str(cat).rstrip("']").lstrip("['") + "</D>" in segment for cat in top10cat):
                 if ('LEWISSPLIT="TRAIN"' or 'LEWISSPLIT="TEST"') in segment and 'TOPICS="YES"' in segment:
+                    inlist = False
                     for cate in top10cat:
-                        if "<D>" + str(cate).rstrip("']").lstrip("['") + "</D>" in segment:
+                        if ("<D>" + str(cate).rstrip("']").lstrip("['") + "</D>" in segment) and inlist == False:
                             soup = BeautifulSoup(segment, features="html.parser")
                             reut_body = soup.findAll("body")
                             if len(reut_body) != 0:
                                 body = str(reut_body[0].string)
                                 X.append(body)
                                 y.append(cate)
+                                inlist = True
+
     return X, y
