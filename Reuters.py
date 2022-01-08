@@ -70,11 +70,11 @@ def file_list():
         return reut_files
 
 
-def return_X_y_reut(selected_category):
-    if Path(r"cache_reuters/cache_binary_" + selected_category + "_X.p").exists() and Path(
-            r"cache_reuters/cache_binary_" + selected_category + "_y.p").exists():
-        X = pickle.load(open("cache_reuters/cache_binary_" + selected_category + "_X.p", "rb"))
-        y = pickle.load(open("cache_reuters/cache_binary_" + selected_category + "_y.p", "rb"))
+def return_X_y_reut():
+    if Path(r"cache_reuters/cache_nonbinary_X.p").exists() and Path(
+            r"cache_reuters/cache_nonbinary_y.p").exists():
+        X = pickle.load(open("cache_reuters/cache_nonbinary_X.p", "rb"))
+        y = pickle.load(open("cache_reuters/cache_nonbinary_y.p", "rb"))
         return X, y
     else:
         reut_files = file_list()
@@ -88,13 +88,60 @@ def return_X_y_reut(selected_category):
             for segment in docs:
                 if ('LEWISSPLIT="TRAIN"' or 'LEWISSPLIT="TEST"') in segment and 'TOPICS="YES"' in segment:
                     inlist = False
-                    if "<D>" + str(selected_category).rstrip("']").lstrip("['") + "</D>" in segment:
+                    for cat in top10cat:
+                        if ("<D>" + str(cat).rstrip("']").lstrip("['") + "</D>" in segment) and (not inlist):
+                            soup = BeautifulSoup(segment, features="html.parser")
+                            reut_body = soup.findAll("body")
+                            if len(reut_body) != 0:
+                                body = str(reut_body[0].string)
+                                X.append(body)
+                                y.append(cat)
+                        '''
+                        else:
+                            for cate in top10cat:
+                                if "<D>" + str(cate).rstrip("']").lstrip("['") + "</D>" in segment and not inlist:
+                                    soup = BeautifulSoup(segment, features="html.parser")
+                                    reut_body = soup.findAll("body")
+                                    if len(reut_body) != 0:
+                                        inlist = True
+                                        body = str(reut_body[0].string)
+                                        X.append(body)
+                                        y.append(1)
+                        '''
+        pickle.dump(X, open("cache_reuters/cache_nonbinary_X.p", "wb"))
+        pickle.dump(y, open("cache_reuters/cache_nonbinary_Y.p", "wb"))
+        return X, y
+
+
+def return_X_y_reut_notallcat(numcat):
+    '''
+    if Path(r"cache_reuters/cache_nonbinary_X.p").exists() and Path(
+            r"cache_reuters/cache_nonbinary_y.p").exists():
+        X = pickle.load(open("cache_reuters/cache_nonbinary_X.p", "rb"))
+        y = pickle.load(open("cache_reuters/cache_nonbinary_y.p", "rb"))
+        return X, y
+    else:
+    '''
+    reut_files = file_list()
+    top10cat = top10categories()
+    X = []
+    y = []
+    for x in reut_files:
+        io = open(x, "r")
+        strr = io.read()
+        docs = strr.split("</REUTERS>")
+        for segment in docs:
+            if ('LEWISSPLIT="TRAIN"' or 'LEWISSPLIT="TEST"') in segment and 'TOPICS="YES"' in segment:
+                inlist = False
+                for cat in top10cat[:numcat]:
+                    if ("<D>" + str(cat).rstrip("']").lstrip("['") + "</D>" in segment) and (not inlist):
                         soup = BeautifulSoup(segment, features="html.parser")
                         reut_body = soup.findAll("body")
                         if len(reut_body) != 0:
                             body = str(reut_body[0].string)
                             X.append(body)
-                            y.append(0)
+                            y.append(cat)
+                    '''
                     else:
                         for cate in top10cat:
                             if "<D>" + str(cate).rstrip("']").lstrip("['") + "</D>" in segment and not inlist:
@@ -105,6 +152,7 @@ def return_X_y_reut(selected_category):
                                     body = str(reut_body[0].string)
                                     X.append(body)
                                     y.append(1)
-        pickle.dump(X, open("cache_reuters/cache_binary_" + selected_category + "_X.p", "wb"))
-        pickle.dump(y, open("cache_reuters/cache_binary_" + selected_category + "_Y.p", "wb"))
+                    '''
+        # pickle.dump(X, open("cache_reuters/cache_nonbinary_X.p", "wb"))
+        # pickle.dump(y, open("cache_reuters/cache_nonbinary_Y.p", "wb"))
         return X, y
