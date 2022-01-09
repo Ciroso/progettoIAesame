@@ -13,9 +13,7 @@ import pickle
 import random
 import string
 import Reuters
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter
 
 
 class LemmaTokenizer(object):
