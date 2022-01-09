@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import os
 import pickle
 
+from main import shuffler, req_percentage
+
 
 def top10categories():
     reuters_files = file_list()
@@ -70,17 +72,25 @@ def file_list():
         return reut_files
 
 
-def return_X_y_reut():
-    if Path(r"cache_reuters/cache_nonbinary_X.p").exists() and Path(
-            r"cache_reuters/cache_nonbinary_y.p").exists():
-        X = pickle.load(open("cache_reuters/cache_nonbinary_X.p", "rb"))
-        y = pickle.load(open("cache_reuters/cache_nonbinary_y.p", "rb"))
-        return X, y
+def return_X_y_reut(category, vectorizer):
+    if Path(r"cache_reuters/cache_X_train_" + category + ".p").exists() and Path(
+            r"cache_reuters/cache_y_train_" + category + ".p").exists() and Path(
+        r"cache_reuters/cache_X_test_" + category + ".p").exists() and Path(
+        r"cache_reuters/cache_y_test_" + category + ".p").exists():
+        print("CACHE")
+        X_train = pickle.load(open("cache_reuters/cache_X_train_" + category + ".p", "rb"))
+        y_train = pickle.load(open("cache_reuters/cache_y_train_" + category + ".p", "rb"))
+        X_test = pickle.load(open("cache_reuters/cache_X_test_" + category + ".p", "rb"))
+        y_test = pickle.load(open("cache_reuters/cache_y_test_" + category + ".p", "rb"))
+        return X_train, y_train, X_test, y_test
     else:
+        print("NO CACHE")
         reut_files = file_list()
         top10cat = top10categories()
-        X = []
-        y = []
+        X_one_cat = []
+        y_one_cat = []
+        X_other_cat = []
+        y_other_cat = []
         for x in reut_files:
             io = open(x, "r")
             strr = io.read()
@@ -94,24 +104,44 @@ def return_X_y_reut():
                             reut_body = soup.findAll("body")
                             if len(reut_body) != 0:
                                 body = str(reut_body[0].string)
-                                X.append(body)
-                                y.append(cat)
-                        '''
-                        else:
-                            for cate in top10cat:
-                                if "<D>" + str(cate).rstrip("']").lstrip("['") + "</D>" in segment and not inlist:
-                                    soup = BeautifulSoup(segment, features="html.parser")
-                                    reut_body = soup.findAll("body")
-                                    if len(reut_body) != 0:
-                                        inlist = True
-                                        body = str(reut_body[0].string)
-                                        X.append(body)
-                                        y.append(1)
-                        '''
-        pickle.dump(X, open("cache_reuters/cache_nonbinary_X.p", "wb"))
-        pickle.dump(y, open("cache_reuters/cache_nonbinary_Y.p", "wb"))
-        return X, y
+                                if cat == category:
+                                    X_one_cat.append(body)
+                                    y_one_cat.append(0)
+                                else:
+                                    X_other_cat.append(body)
+                                    y_other_cat.append(1)
 
+        new_y = []
+        for i in range(len(y_other_cat)):
+            new_y.append(1)
+        split_one_cat = int(req_percentage(len(y_one_cat), 80))
+        split_other_cat = int(req_percentage(len(y_other_cat), 80))
+        X_train = X_one_cat[:split_one_cat] + X_other_cat[:split_other_cat]
+        X_test = X_one_cat[split_one_cat:] + X_other_cat[split_other_cat:]  # fixme +1+1
+
+        y_train = []
+        y_test = []
+        for i in range(split_one_cat):
+            y_train.append(0)
+        for i in range(split_other_cat):
+            y_train.append(1)
+
+        for i in range(len(y_one_cat) - split_one_cat):
+            y_test.append(0)
+        for i in range(len(y_other_cat) - split_other_cat):
+            y_test.append(1)
+
+        X_train, y_train = shuffler(X_train, y_train)
+        X_test, y_test = shuffler(X_test, y_test)
+
+        X_vectorized_train = vectorizer.fit_transform(X_train)
+        X_vectorized_test = vectorizer.transform(X_test)
+
+        pickle.dump(X_vectorized_train, open("cache_reuters/cache_X_train_" + category + ".p", "wb"))
+        pickle.dump(y_train, open("cache_reuters/cache_y_train_" + category + ".p", "wb"))
+        pickle.dump(X_vectorized_test, open("cache_reuters/cache_X_test_" + category + ".p", "wb"))
+        pickle.dump(y_test, open("cache_reuters/cache_y_test_" + category + ".p", "wb"))
+        return X_vectorized_train, y_train, X_vectorized_test, y_test
 
 def return_X_y_reut_notallcat(numcat):
     '''
@@ -141,18 +171,7 @@ def return_X_y_reut_notallcat(numcat):
                             body = str(reut_body[0].string)
                             X.append(body)
                             y.append(cat)
-                    '''
-                    else:
-                        for cate in top10cat:
-                            if "<D>" + str(cate).rstrip("']").lstrip("['") + "</D>" in segment and not inlist:
-                                soup = BeautifulSoup(segment, features="html.parser")
-                                reut_body = soup.findAll("body")
-                                if len(reut_body) != 0:
-                                    inlist = True
-                                    body = str(reut_body[0].string)
-                                    X.append(body)
-                                    y.append(1)
-                    '''
+
         # pickle.dump(X, open("cache_reuters/cache_nonbinary_X.p", "wb"))
         # pickle.dump(y, open("cache_reuters/cache_nonbinary_Y.p", "wb"))
         return X, y
