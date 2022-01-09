@@ -234,9 +234,6 @@ def multiplotter(num_cat, scores_bnb, scores_prc, dataset):
     ax2.plot(range(1,len(scores_prc)+1,1), scores_prc, color='orange', label="Perceptron")
     ax2.grid()
     ax2.legend()
-    # y_formatter = ScalarFormatter(useOffset=False)
-    # ax1.yaxis.set_major_formatter(y_formatter)
-    # ax2.yaxis.set_major_formatter(y_formatter)
     plt.xticks(rotation=45)
     plt.show()
 
