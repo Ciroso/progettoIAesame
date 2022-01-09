@@ -117,7 +117,7 @@ def return_X_y_reut(category, vectorizer):
         split_one_cat = int(req_percentage(len(y_one_cat), 80))
         split_other_cat = int(req_percentage(len(y_other_cat), 80))
         X_train = X_one_cat[:split_one_cat] + X_other_cat[:split_other_cat]
-        X_test = X_one_cat[split_one_cat:] + X_other_cat[split_other_cat:]  # fixme +1+1
+        X_test = X_one_cat[split_one_cat:] + X_other_cat[split_other_cat:]
 
         y_train = []
         y_test = []
